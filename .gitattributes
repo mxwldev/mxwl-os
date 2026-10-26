@@ -1,0 +1,2 @@
+# Preserve downloaded font/license bytes for the provenance checksums.
+assets/fonts/** -text -whitespace

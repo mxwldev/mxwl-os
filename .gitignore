@@ -1,0 +1,5 @@
+build/
+theme-builder/target/
+__pycache__/
+*.pyc
+screenshots/
