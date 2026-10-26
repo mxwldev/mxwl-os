@@ -72,7 +72,7 @@ def wallpaper(brand):
     return name
 
 
-def build(window_list=None,preserve_layout=False):
+def build(window_list=None,preserve_layout=False,refresh_accent=False):
     from dependencies import source, panel_layout, requirement
     window_list=source(window_list)
     brand=effective_brand()
@@ -130,7 +130,8 @@ def build(window_list=None,preserve_layout=False):
     style={**module.MXWL,**module.accent_colors(brand['accent'],brand['background'])}
     if preserve_layout:
         current=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))/'cosmic'
-        for key in style.keys()-{'accent_color','active_text_color','active_background'}:
+        preserved=style.keys()-({'accent_color','active_text_color','active_background'} if refresh_accent else set())
+        for key in preserved:
             path=current/'io.github.kerry.CosmicWindowList/v1'/key
             if path.is_file():style[key]=json.loads(path.read_text())
         for key in ('background','opacity','border_radius','padding','spacing','size'):

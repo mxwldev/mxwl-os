@@ -4,6 +4,50 @@ A user-local desktop profile for **Pop!_OS 24.04 with COSMIC**, matching
 `mxwl-editor`: charcoal backgrounds, muted green accents, compact borders,
 Space Grotesk UI text and IBM Plex Mono controls and terminals.
 
+## Quick install
+
+From a terminal in **Pop!_OS 24.04 with COSMIC**:
+
+```sh
+git clone https://github.com/mxwldev/mxwl-os.git
+cd mxwl-os
+./install.sh
+```
+
+Run the script as your normal user. It automatically:
+
+1. Installs missing system/build packages through `sudo apt-get`.
+2. Installs a current stable Rust toolchain if needed.
+3. Downloads, builds, installs and enables the required **COSMIC Window List**.
+4. Installs fonts, icons and wallpaper, backs up your settings and applies mxwl.
+
+There is no separate Window List installation step. The first build can take
+several minutes. Open **mxwl OS Appearance** afterward to pick a machine color.
+
+Both repositories are private. Your GitHub account needs read access to
+[`mxwldev/mxwl-os`](https://github.com/mxwldev/mxwl-os) and
+[`KerryRitter/cosmic-window-list`](https://github.com/KerryRitter/cosmic-window-list).
+Authenticate Git before cloning; with GitHub CLI, use `gh auth login` and
+`gh auth setup-git`. SSH clones work too: the script reuses SSH for Window List
+without changing your global Git configuration.
+
+Check prerequisites and repository access without installing anything:
+
+```sh
+./install.sh --check
+```
+
+If build dependencies are already installed or managed separately:
+
+```sh
+./install.sh --skip-system-packages
+```
+
+The same script works for updates: run `git pull --ff-only`, then `./install.sh`.
+Existing tile colors, font size, padding and panel height are preserved when
+updating an installed profile. Already installed, unmodified Window List files
+are reused at the required version.
+
 ## Included
 
 | Component | What changes |
@@ -20,7 +64,7 @@ Space Grotesk UI text and IBM Plex Mono controls and terminals.
 Colors come from [brand.json](brand.json), copied from
 `../mxwl-editor/src/shared/brand.json`. The editor itself is not modified.
 
-## Install
+## Installer details
 
 **COSMIC Window List is required and installed automatically.** The installer
 fetches the exact commit in `dependencies.json`, builds the applet, installs its
@@ -28,27 +72,28 @@ settings application, enables it in the panel, then builds and applies mxwl.
 Existing panel icons and other applets are preserved. Later applications check
 the installed revision and file hashes, reinstalling the dependency when needed.
 
-Install build prerequisites once on Pop!_OS 24.04:
+`install.sh` handles these prerequisites automatically. If an administrator
+prefers to install packages separately, the equivalent commands are:
 
 ```sh
 sudo apt update
-sudo apt install build-essential pkg-config git python3 python3-cairo python3-gi \
+sudo apt install build-essential pkg-config git curl ca-certificates python3 python3-cairo python3-gi \
   gir1.2-gtk-3.0 fontconfig libxkbcommon-dev libwayland-dev libfontconfig-dev \
   libfreetype-dev libdbus-1-dev libudev-dev
 ```
 
-A current stable Cargo/Rust toolchain supporting edition 2024 is also required.
-Both repositories are private; authenticate Git with an account that can read
-`mxwldev/mxwl-os` and `KerryRitter/cosmic-window-list`. For HTTPS Git with GitHub
-CLI, run `gh auth login` and `gh auth setup-git` once.
+A current stable Cargo/Rust toolchain is also required. The bootstrap checks for
+Rust 1.99 or newer, the toolchain family used to verify the pinned COSMIC sources.
+When needed, it installs Rust through the official `https://sh.rustup.rs`
+installer, using the minimal profile and leaving shell startup files alone.
+
+The lower-level installer is available when prerequisites are already managed:
 
 ```sh
-git clone https://github.com/mxwldev/mxwl-os.git ~/Workspaces/mxwl/mxwl-os
-cd ~/Workspaces/mxwl/mxwl-os
 ./mxwl-os install
 ```
 
-Run `install` as your normal user in a COSMIC session. It needs no sudo after
+Run either installer as your normal user in a COSMIC session. No sudo is used after
 system prerequisites are installed. It replaces App Tray in its existing panel
 slot, or adds Window List when no taskbar slot exists. The native COSMIC applets
 already installed with Pop!_OS inherit the theme; no GNOME extensions are needed.
@@ -66,19 +111,22 @@ cd ~/Workspaces/mxwl/mxwl-os
 ./mxwl-os status
 ```
 
-Building writes only this project's `build/` directory and exported themes in
-`themes/`. View `build/data/backgrounds/mxwl/mxwl-grid.png` for the wallpaper.
+Theme output is written to this project's `build/` directory and exported themes
+in `themes/`; fetched dependencies use the caches described below.
+View `build/data/backgrounds/mxwl/mxwl-grid.png` for the wallpaper.
 The native theme is generated and read back using the same library family as
 COSMIC Settings. Both v1 and v2 config files are included for the mixed versions
 of COSMIC applications shipped on this machine.
 
-The source is cached in `~/.cache/mxwl-os/dependencies/`. An existing clean sibling
-`~/Workspaces/cosmic-window-list` checkout at the required commit is reused.
+The source is cached in `~/.cache/mxwl-os/dependencies/`. An existing clean
+`~/Workspaces/cosmic-window-list` checkout at the required commit is reused when
+mxwl-os is checked out at `~/Workspaces/mxwl/mxwl-os`.
 For development, use an explicit local checkout:
 
 ```sh
 ./mxwl-os build --window-list /path/to/cosmic-window-list
 ./mxwl-os install --window-list /path/to/cosmic-window-list
+./install.sh --window-list /path/to/cosmic-window-list
 ```
 
 ## Apply and restore
@@ -152,6 +200,10 @@ optional panel controls. Applying this full profile reapplies its mxwl preset.
 The compact preset uses 14 px labels, 6 px horizontal and 2 px vertical tile
 padding, 2 px gaps and an XS panel with zero outer padding. Adjust **Label font
 size**, **Tile horizontal/vertical padding** and **Panel height** in that window.
+Choose **Background color** and **Foreground color** to style window tiles, or
+their **Active** counterparts for the focused window. **Panel background color**
+has its own color picker and hex input. Close and reopen settings after updating
+if an already open settings window still shows the previous controls.
 
 Native theme-builder source and dependency lockfile are in `theme-builder/`.
 Font provenance and checksums are in `assets/fonts/sources.json`.
@@ -161,6 +213,8 @@ Font provenance and checksums are in `assets/fonts/sources.json`.
 ```sh
 ./mxwl-os build
 /usr/bin/python3 -m unittest discover -s tests -v
+bash -n install.sh
+./install.sh --check
 ./mxwl-os apply --dry-run
 ```
 

@@ -19,7 +19,7 @@ def set_accent(color):
     path=machine_path(); original=path.read_bytes() if path.exists() else None
     try:
         Installer.replace_file(path,(json.dumps(preferences,indent=2)+'\n').encode())
-        build(preserve_layout=True)
+        build(preserve_layout=True,refresh_accent=True)
         Installer().apply()
     except Exception:
         if original is None: path.unlink(missing_ok=True)
