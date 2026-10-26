@@ -70,6 +70,23 @@ class BootstrapTests(unittest.TestCase):
         self.assertFalse(self.sudo_log.exists())
         self.assertFalse(self.record.exists())
 
+    def test_public_dependency_check_uses_https_without_ssh_or_authentication(self):
+        git_log=self.root/'git.jsonl'
+        self.env['MXWL_TEST_GIT_LOG']=str(git_log)
+        tools=Path(self.env['HOME'])/'.cargo/bin'
+        git=tools/'git'
+        git.write_text('#!/usr/bin/python3\nimport json,os,sys\n'
+            'with open(os.environ["MXWL_TEST_GIT_LOG"],"a") as log: log.write(json.dumps(sys.argv[1:])+"\\n")\n'
+            'if "remote" in sys.argv: print("git@github.com:mxwldev/mxwl-os.git")\n')
+        git.chmod(0o755)
+        result=subprocess.run(['bash',str(self.project/'install.sh'),'--check','--skip-system-packages'],
+                              env=self.env,capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual([json.loads(line) for line in git_log.read_text().splitlines()],
+                         [['ls-remote','https://github.com/KerryRitter/cosmic-window-list.git','HEAD']])
+        self.assertFalse(self.sudo_log.exists())
+        self.assertFalse(self.record.exists())
+
     def test_old_rust_is_upgraded_before_the_desktop_installer_runs(self):
         tools=Path(self.env['HOME'])/'.cargo/bin'
         (tools/'rustc').write_text("#!/bin/sh\nprintf 'rustc 1.85.0 (fixture)\\n'\n")

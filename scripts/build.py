@@ -101,6 +101,8 @@ def build(window_list=None,preserve_layout=False,refresh_accent=False):
     config('com.system76.CosmicTheme.Mode','is_dark','true')
     config('com.system76.CosmicTk','apply_theme_global','true')
     config('com.system76.CosmicTk','icon_theme','"mxwl"')
+    from shortcuts import CONFIG_PATH, DEFAULTS
+    write(BUILD/'config'/CONFIG_PATH,DEFAULTS)
     # COSMIC defaults to text buttons at XS; retain icons on the compact panel.
     config('com.system76.CosmicPanelButton','configs',
            '{"Panel": (force_presentation: Some(Icon)), "Dock": (force_presentation: Some(Icon))}')

@@ -108,18 +108,10 @@ command -v git >/dev/null || fail 'Git is missing. Rerun without --skip-system-p
 
 if (( ${#mxwl_install_args[@]} == 0 )); then
     mxwl_dependency_url="$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["cosmic-window-list"]["repository"])' "$mxwl_project_dir/dependencies.json")"
-    mxwl_origin="$(git -C "$mxwl_project_dir" remote get-url origin 2>/dev/null || true)"
-    # A checkout cloned over SSH already has SSH credentials. Reuse them for the
-    # private dependency without changing the user's persistent Git settings.
-    if [[ "$mxwl_origin" == git@github.com:* || "$mxwl_origin" == ssh://git@* ]]; then
-        mxwl_git_config_index="${GIT_CONFIG_COUNT:-0}"
-        [[ "$mxwl_git_config_index" =~ ^[0-9]+$ ]] || fail 'Invalid GIT_CONFIG_COUNT.'
-        export "GIT_CONFIG_KEY_$mxwl_git_config_index=url.git@github.com:KerryRitter/cosmic-window-list.git.insteadOf"
-        export "GIT_CONFIG_VALUE_$mxwl_git_config_index=$mxwl_dependency_url"
-        export GIT_CONFIG_COUNT="$((mxwl_git_config_index + 1))"
-    fi
+    # Both repositories are public. Use the dependency's HTTPS URL regardless
+    # of how this checkout was cloned; GitHub authentication is not required.
     git ls-remote "$mxwl_dependency_url" HEAD >/dev/null \
-        || fail 'GitHub access is required for KerryRitter/cosmic-window-list. Authenticate Git with an account that can read both private repositories, then rerun.'
+        || fail 'Cannot reach KerryRitter/cosmic-window-list over HTTPS. Check your network and Git configuration, then rerun.'
     printf 'Window List repository access verified.\n'
 else
     /usr/bin/python3 - "$mxwl_project_dir" "${mxwl_install_args[1]}" <<'PY'

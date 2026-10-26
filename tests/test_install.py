@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import manage
+import shortcuts
 
 
 class InstallTests(unittest.TestCase):
@@ -24,6 +25,7 @@ class InstallTests(unittest.TestCase):
             ('config','gtk-4.0/cosmic/dark.css'):b'/* mxwl */\n',
             ('config','cosmic/com.system76.CosmicTerm/v1/color_schemes_dark'):b'{1919514476: (name: "mxwl")}\n',
             ('config','cosmic/com.system76.CosmicBackground/v1/all'):b'mxwl background',
+            ('config',shortcuts.CONFIG_PATH):shortcuts.DEFAULTS.encode(),
             ('config','mxwl-os/profile.json'):b'{"name":"mxwl"}',
             ('data','fonts/mxwl/spacegrotesk/SpaceGrotesk[wght].ttf'):b'font fixture',
         }
@@ -44,6 +46,36 @@ class InstallTests(unittest.TestCase):
         result=manage.merge_scheme(previous,'{1919514476: (name: "mxwl")}')
         self.assertIn('Other, scheme',result); self.assertEqual(result.count('1919514476:'),1)
         self.assertNotIn('old mxwl',result)
+
+    def test_shortcut_update_preserves_other_bindings_and_restores_original(self):
+        target=self.config/shortcuts.CONFIG_PATH;target.parent.mkdir(parents=True)
+        original='''{
+    // Keep the uploader shortcut, including its command and description.
+    (modifiers: [Ctrl, Shift, Alt], key: "u", description: Some("Upload, now")): Spawn("upload --title \\\"a,b\\\""),
+    (key: "space", description: Some("Old launcher"), modifiers: [Alt]): Spawn("old-launcher"),
+    (modifiers: [Ctrl, Alt], key: "t"): System(Terminal) // terminal
+}
+'''
+        target.write_text(original)
+        backup=self.installer.apply(refresh=False)
+        updated=target.read_text()
+        self.assertIn('Upload, now',updated)
+        self.assertIn('Spawn("upload --title \\\"a,b\\\"")',updated)
+        self.assertIn('System(Terminal)',updated)
+        self.assertIn('// terminal',updated)
+        self.assertNotIn('old-launcher',updated)
+        self.assertEqual(updated.count('System(Launcher)'),1)
+        self.assertEqual(self.installer.plan(),[])
+        self.installer.restore(backup,refresh=False)
+        self.assertEqual(target.read_text(),original)
+
+    def test_invalid_shortcuts_abort_before_any_files_are_written(self):
+        target=self.config/shortcuts.CONFIG_PATH;target.parent.mkdir(parents=True)
+        target.write_text('{invalid shortcut map')
+        with self.assertRaises(ValueError):self.installer.apply(refresh=False)
+        self.assertEqual(target.read_text(),'{invalid shortcut map')
+        self.assertFalse((self.config/'gtk-3.0/settings.ini').exists())
+        self.assertFalse((self.installer.state/'backups').exists())
 
     def test_apply_is_idempotent_and_restore_recovers_symlinks_and_files(self):
         ini=self.config/'gtk-3.0/settings.ini'; ini.parent.mkdir()

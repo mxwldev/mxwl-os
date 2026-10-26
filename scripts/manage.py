@@ -15,6 +15,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[1]
 BUILD=ROOT/'build'
 sys.path.insert(0,str(ROOT/'scripts'))
+from shortcuts import CONFIG_PATH as SHORTCUTS_PATH, merge as merge_shortcuts
 
 
 def merge_ini(original, overlay):
@@ -83,6 +84,8 @@ class Installer:
                         text=merge_ini(target.read_text() if target.exists() else '',text)
                     elif target.name=='color_schemes_dark':
                         text=merge_scheme(target.read_text() if target.exists() else '{}',text)
+                    elif str(relative)==SHORTCUTS_PATH:
+                        text=merge_shortcuts(target.read_text() if target.exists() else '{}',text)
                     data=text.encode()
                 change['data']=data
                 same=target.is_file() and not target.is_symlink() and target.read_bytes()==data
