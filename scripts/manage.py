@@ -200,7 +200,11 @@ def main():
     install.add_argument('--window-list',type=Path,help='Use a local Window List development checkout')
     accent=sub.add_parser('accent',help='Show or set this machine’s desktop accent color')
     accent.add_argument('color',nargs='?',help='Hex color, e.g. #8ccfe5 (quote it in the shell)')
-    sub.add_parser('settings',help='Open the machine accent color picker')
+    theme=sub.add_parser('theme',help='Show or replace this machine’s desktop theme preferences')
+    theme_options=theme.add_mutually_exclusive_group()
+    theme_options.add_argument('--file',type=Path,help='Apply a JSON preference file; use - to read standard input')
+    theme_options.add_argument('--reset',action='store_true',help='Apply shared mxwl defaults to this machine')
+    sub.add_parser('settings',help='Open desktop colors, fonts and window appearance settings')
     sub.add_parser('status',help='Report desktop and pending changes')
     apply=sub.add_parser('apply',help='Apply to this user with a complete file backup')
     apply.add_argument('--dry-run',action='store_true')
@@ -230,6 +234,16 @@ def main():
         else:
             from machine import set_accent
             set_accent(args.color)
+    elif args.command=='theme':
+        from build import effective_brand
+        from appearance import COLORS, DEFAULTS
+        if args.file is not None or args.reset:
+            from machine import set_theme
+            preferences={} if args.reset else json.loads(sys.stdin.read() if str(args.file)=='-' else args.file.read_text())
+            set_theme(preferences)
+        else:
+            brand=effective_brand()
+            print(json.dumps({key:brand[key] for key in (*COLORS,*DEFAULTS)},indent=2))
     elif args.command=='restore': installer.restore(args.backup)
     elif args.command=='status':
         print('Desktop: '+os.environ.get('XDG_CURRENT_DESKTOP','unknown'))

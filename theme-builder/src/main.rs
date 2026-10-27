@@ -28,10 +28,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     builder.warning = Some(rgb(color("peach")));
     builder.destructive = Some(rgb(color("error")));
     builder.window_hint = Some(rgb(color("accent")));
-    builder.gaps = (4, 4); builder.active_hint = 1;
+    let number = |key: &str, default: u32| brand[key].as_u64().map(|n| n as u32).unwrap_or(default);
+    builder.gaps = (number("outer_gap", 4), number("inner_gap", 4));
+    builder.active_hint = number("active_hint", 1);
+    let radius = number("corner_radius", 2) as f32;
     builder.corner_radii = CornerRadii {
-        radius_0: [0.; 4], radius_xs: [0.; 4], radius_s: [0.; 4],
-        radius_m: [2.; 4], radius_l: [4.; 4], radius_xl: [160.; 4],
+        radius_0: [0.; 4], radius_xs: [(radius - 2.).max(0.); 4], radius_s: [(radius - 2.).max(0.); 4],
+        radius_m: [radius; 4], radius_l: [radius * 2.; 4], radius_xl: [160.; 4],
     };
     let pretty = ron::ser::PrettyConfig::default();
     let theme_ron = ron::ser::to_string_pretty(&builder, pretty.clone())?;
@@ -47,6 +50,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         value[layer]["component"]["selected_text"] = json!(format!("{}ff", color("accentHover")));
         value[layer]["component"]["focus"] = json!(format!("{}ff", color("accent")));
         value[layer]["component"]["border"] = json!(format!("{}ff", color("line")));
+        value[layer]["component"]["on_disabled"] = json!(format!("{}ff", color("muted")));
+        value[layer]["component"]["disabled_border"] = json!(format!("{}ff", color("faint")));
+    }
+    for component in ["accent", "accent_button", "success", "success_button"] {
+        value[component]["on"] = json!(format!("{}ff", color("accentInk")));
+        value[component]["hover"] = json!(format!("{}ff", color("accentHover")));
     }
     let theme: Theme = serde_json::from_value(value)?;
     builder.write_entry(&Config::with_custom_path("com.system76.CosmicTheme.Dark.Builder", ThemeBuilder::VERSION, output.join("config"))?)?;

@@ -10,6 +10,7 @@ needed to build and install the profile independently.
 
 - [Install](#quick-install)
 - [Features](#included)
+- [Screenshots](#screenshots)
 - [Customize colors and the panel](#customize)
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Update](#update)
@@ -102,6 +103,38 @@ be changed in its settings.
 
 Colors come from [brand.json](brand.json). Machine-specific overrides are stored
 in your user configuration rather than committed to the shared palette.
+
+## Screenshots
+
+The running COSMIC panel with the compact mxwl preset and four accent colors.
+Each screenshot shows an active mxwl-editor tile beside inactive window tiles.
+Choose an accent in **mxwl OS Appearance** to use it across the desktop.
+
+| Accent | Running panel |
+| --- | --- |
+| Green | ![COSMIC panel with the green mxwl accent](docs/screenshots/panel-green.png) |
+| Sky | ![COSMIC panel with the sky blue accent](docs/screenshots/panel-sky.png) |
+| Lavender | ![COSMIC panel with the lavender accent](docs/screenshots/panel-lavender.png) |
+| Peach | ![COSMIC panel with the peach accent](docs/screenshots/panel-peach.png) |
+
+**Desktop colors and preview.** Edit backgrounds, text, borders and accents with
+color pickers or hex values. The preview stays visible as you scroll.
+
+<img src="docs/screenshots/theme-colors.png" alt="mxwl OS Appearance showing color presets, the live desktop preview and editable palette" width="620">
+
+<details>
+<summary>Fonts and window appearance controls</summary>
+
+Choose interface and monospace fonts, terminal text size, inner and outer window
+gaps, active-window border width and corner radius. **Apply theme** saves these
+preferences for this machine.
+
+<img src="docs/screenshots/theme-fonts-and-windows.png" alt="mxwl OS Appearance font selectors, terminal font size, window gaps, active border and corner radius controls" width="620">
+
+</details>
+
+Tile colors and panel dimensions have their own controls in
+[Window List Settings](https://github.com/KerryRitter/cosmic-window-list#screenshots).
 
 ## Installer details
 
@@ -217,10 +250,23 @@ To import only the colors manually, use `themes/mxwl.ron` in
 ## Customize
 
 Open **mxwl OS Appearance** from the launcher, or run `./mxwl-os settings`, to
-choose a machine accent with the color picker, a hex value or color presets.
-The color updates native COSMIC highlights, active window tiles, terminal colors
-and folder icons together. Font size, tile padding and panel height remain as
-you set them when changing the accent.
+edit this machine's desktop theme. Like Window List's appearance settings, it
+includes color pickers, hex inputs, presets and a live preview. Choose **Apply
+theme** to save and apply your changes.
+
+- Edit backgrounds, surfaces, text, borders, accent and terminal palette colors.
+- Choose interface and monospace fonts, and the terminal font size.
+- Adjust inner/outer window gaps, active-window border width and corner radius.
+- Use **Green**, **Sky**, **Lavender** or **Peach** to change the accent while
+  keeping other choices. **mxwl defaults** resets the editor to the shared
+  palette and default fonts and geometry; apply to save the reset.
+
+The theme updates native COSMIC settings, GTK/Qt color exports, terminal colors,
+folder icons and the generated wallpaper. Changing the accent also updates
+active window tiles and derives highlight and accent text colors, which can
+then be edited independently. Existing Window List colors and dimensions and
+panel styling are preserved, apart from active tile colors when the accent
+changes. Open **Window List Settings** for tile and panel controls.
 
 The CLI supports the same per-machine setting:
 
@@ -229,8 +275,24 @@ The CLI supports the same per-machine setting:
 ./mxwl-os accent
 ```
 
-The preference is stored in `~/.config/mxwl-os/machine.json`, so each machine can
-use a different color without editing the shared brand palette.
+Preferences are stored in `~/.config/mxwl-os/machine.json`, so each machine can
+use a different theme without editing the shared brand palette. They survive
+rebuilds and updates; accent-only changes keep your other theme choices.
+
+Export, edit and reapply a theme from the CLI:
+
+```sh
+./mxwl-os theme > my-theme.json
+# Edit the colors, font families or dimensions in my-theme.json.
+./mxwl-os theme --file my-theme.json
+./mxwl-os theme --reset
+```
+
+`theme` shows the effective preferences without changing the desktop.
+`theme --file` replaces this machine's preferences; omitted values use shared
+defaults. Colors must be six-digit hex values. Font families come from the
+installed fonts. `theme --reset` applies the shared mxwl defaults. Application
+failures restore the previous preferences along with the desktop transaction.
 
 Edit `brand.json` and rerun `build` to generate desktop colors and wallpaper.
 Button colors and geometry are configured independently through **Window List
@@ -275,8 +337,8 @@ git pull --ff-only
 The installer checks the pinned Window List revision and installed file hashes.
 It reuses an intact installation or rebuilds it when necessary, then rebuilds
 and applies the profile with a new backup. Existing tile colors, font size,
-padding and panel height are preserved on updates. Machine accents remain in
-your local configuration.
+padding and panel height are preserved on updates. Machine colors, fonts and
+window geometry remain in your local configuration.
 
 Use `./install.sh --skip-system-packages` if your administrator manages build
 dependencies. This still checks Rust and the Python GTK/Cairo dependencies.
@@ -297,9 +359,12 @@ subcommand's `--help` show the available options.
 | `./mxwl-os apply --dry-run` | List pending changes from an existing build without applying them |
 | `./mxwl-os apply` | Verify the applet dependency and apply the current build with backups |
 | `./mxwl-os status` | Report the profile, accent, applet readiness, pending files and resolved fonts |
-| `./mxwl-os settings` | Open the machine accent picker |
+| `./mxwl-os settings` | Open desktop theme controls and live preview |
 | `./mxwl-os accent` | Print the effective accent color |
 | `./mxwl-os accent '#8ccfe5'` | Save and apply this machine's accent |
+| `./mxwl-os theme` | Print effective machine theme preferences as JSON |
+| `./mxwl-os theme --file /path/to/theme.json` | Save and apply a machine theme; `-` reads standard input |
+| `./mxwl-os theme --reset` | Apply shared mxwl colors, fonts and window geometry |
 | `./mxwl-os restore` | Restore the original desktop baseline |
 | `./mxwl-os restore /path/to/backup` | Restore one particular apply transaction |
 
@@ -318,12 +383,12 @@ use that project's home-directory install locations.
 | `~/.config/cosmic/` | Native theme, fonts, panel, terminal, wallpaper and shortcut preferences |
 | `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/` | GTK settings and native COSMIC CSS exports |
 | `~/.config/qt5ct/`, `~/.config/qt6ct/`, `~/.config/kdeglobals` | Qt/KDE palette integration |
-| `~/.config/mxwl-os/machine.json` | This machine's chosen accent |
+| `~/.config/mxwl-os/machine.json` | This machine's colors, fonts and window geometry |
 | `~/.config/mxwl-os/profile.json` | Applied profile and resolved brand colors |
 | `~/.local/share/fonts/mxwl/` | Bundled fonts and licenses |
 | `~/.local/share/icons/mxwl/` | Folder icons and inherited icon-theme definition |
 | `~/.local/share/backgrounds/mxwl/` | Generated wallpaper |
-| `~/.local/share/applications/io.github.kerry.MxwlOSAppearance.desktop` | Accent-picker launcher registration |
+| `~/.local/share/applications/io.github.kerry.MxwlOSAppearance.desktop` | Desktop appearance launcher registration |
 | `~/.local/share/color-schemes/` | Native COSMIC Qt color export |
 | `~/.local/bin/cosmic-window-list` | Window List applet executable |
 | `~/.local/bin/cosmic-window-list-settings` | Window List settings launcher |
@@ -344,7 +409,7 @@ restore the state immediately before that apply transaction instead.
 
 Restore before deleting the checkout or the backups. Restoration leaves the
 separately installed Window List applet, build tools, Rust toolchain and saved
-machine accent available. To remove the applet too, follow its
+machine theme available. To remove the applet too, follow its
 [uninstall instructions](https://github.com/KerryRitter/cosmic-window-list#uninstall-or-switch-back).
 
 ## Troubleshooting
@@ -381,6 +446,10 @@ Tests use temporary XDG directories and cover INI merging, retaining terminal
 schemes, idempotent installation, exact file/symlink restoration, removing newly
 installed files and recovery from an interrupted write. Shortcut updates merge
 Alt+Space into the existing custom map and participate in backup and restore.
+Theme checks cover machine-local persistence, validation, accent compatibility,
+CLI export/import and preference rollback. GTK checks exercise color editing,
+presets and reset without applying the theme; these skip if GTK or a display is
+unavailable.
 
 Native configuration and exports use
 [System76's cosmic-theme](https://github.com/pop-os/libcosmic/tree/511384f6206527cf87369da67a9164831afbabef/cosmic-theme).
